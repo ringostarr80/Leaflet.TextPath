@@ -9,11 +9,11 @@
     ],
     "main": "leaflet.textpath.js",
     "bugs": {
-        "url": "https://github.com/makinacorpus/Leaflet.TextPath/issues"
+        "url": "https://github.com/ringostarr80/Leaflet.TextPath/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com/makinacorpus/Leaflet.TextPath.git"
+        "url": "git://github.com/ringostarr80/Leaflet.TextPath.git"
     },
     "license": "MIT",
     "scripts": {
