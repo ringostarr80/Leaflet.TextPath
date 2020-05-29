@@ -11,7 +11,52 @@
     const __bringToFront = L.Polyline.prototype.bringToFront;
 
     const PolylineTextPath = {
+        mutationObserver: null,
+
         onAdd: function (map) {
+            const instance = this;
+            this.mutationObserver = new MutationObserver(function(mutationList, observer) {
+                if (!(SVGPathEditor && typeof SVGPathEditor.reverse === 'function')) {
+                    return;
+                }
+                if (!instance._textNode) {
+                    return;
+                }
+                if (!instance._textNode.firstChild) {
+                    return;
+                }
+
+                for(let mutation of mutationList) {
+                    if (mutation.type !== 'childList') {
+                        continue;
+                    }
+
+                    for(const removedNode of mutation.removedNodes) {
+                        if (removedNode.nodeName !== 'path') {
+                            continue;
+                        }
+                        if (!removedNode.id) {
+                            continue;
+                        }
+                        if (removedNode.id.indexOf('pathdef-') !== 0) {
+                            continue;
+                        }
+    
+                        const reversedId = removedNode.id + '-reversed';
+                        const reversedElement = document.getElementById(reversedId);
+                        if (!reversedElement) {
+                            continue;
+                        }
+    
+                        reversedElement.parentElement.removeChild(reversedElement);
+                    }
+                }
+            });
+            this.mutationObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
             __onAdd.call(this, map);
             this._textRedraw();
         },
@@ -72,7 +117,6 @@
             if (!text) {
                 if (this._textNode && this._textNode.parentNode) {
                     this._map._renderer._container.removeChild(this._textNode);
-                    
                     /* delete the node, so it will not be removed a 2nd time if the layer is later removed from the map */
                     delete this._textNode;
                 }
@@ -106,6 +150,34 @@
             const dy = options.offset || this._path.getAttribute('stroke-width');
 
             textPath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", '#' + id);
+
+            let reversedPathElement = document.getElementById(id + '-reversed');
+            if (reversedPathElement) {
+                reversedPathElement.parentNode.removeChild(reversedPathElement);
+            }
+            if (options.orientation === 'reverse') {
+                if (SVGPathEditor && typeof SVGPathEditor.reverse === 'function') {
+                    options.orientation = 0;
+                    const pathElement = document.getElementById(id);
+                    if (pathElement) {
+                        const dAttr = pathElement.attributes.getNamedItem('d');
+                        if (dAttr) {
+                            const d = dAttr.value;
+                            const dReversed = SVGPathEditor.reverse(d);
+                            reversedPathElement = pathElement.cloneNode(true);
+                            reversedPathElement.setAttribute('d', dReversed);
+                            reversedPathElement.setAttribute('id', id + '-reversed');
+                            reversedPathElement.setAttribute('stroke-opacity', '0');
+                            pathElement.parentNode.insertBefore(reversedPathElement, pathElement);
+                            textPath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", '#' + id + '-reversed');
+                        }
+                    }
+                } else {
+                    console.warn('SVGPathEditor is not available (see: https://github.com/Pomax/svg-path-reverse). Fallback to flipping the text!');
+                    options.orientation = 'flip';
+                }
+            }
+
             textNode.setAttribute('dy', dy);
             for(const attr in options.attributes) {
                 textNode.setAttribute(attr, options.attributes[attr]);
@@ -133,6 +205,8 @@
             if (options.orientation) {
                 let rotateAngle = 0;
                 switch (options.orientation) {
+                    case 'reverse':
+                        break;
                     case 'flip':
                         rotateAngle = 180;
                         break;
