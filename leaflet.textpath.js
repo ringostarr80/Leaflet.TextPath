@@ -31,26 +31,26 @@
                         continue;
                     }
 
-                    for(const removedNode of mutation.removedNodes) {
+					for(const removedNode of mutation.removedNodes) {
                         if (removedNode.nodeName !== 'path') {
                             continue;
                         }
                         if (!removedNode.id) {
                             continue;
-                        }
-                        if (removedNode.id.indexOf('pathdef-') !== 0) {
+						}
+						if (removedNode.id.indexOf('pathdef-') !== 0) {
                             continue;
                         }
-    
+	
                         const reversedId = removedNode.id + '-reversed';
                         const reversedElement = document.getElementById(reversedId);
                         if (!reversedElement) {
                             continue;
                         }
-    
+	
                         reversedElement.parentElement.removeChild(reversedElement);
                     }
-                }
+				}
             });
             this.mutationObserver.observe(document.body, {
                 childList: true,
@@ -75,7 +75,10 @@
         },
 
         _updatePath: function () {
-            __updatePath.call(this);
+			if (!this._renderer) {
+				return;
+			}
+			__updatePath.call(this);
             this._textRedraw();
         },
 
@@ -154,9 +157,9 @@
             let reversedPathElement = document.getElementById(id + '-reversed');
             if (reversedPathElement) {
                 reversedPathElement.parentNode.removeChild(reversedPathElement);
-            }
-            if (options.orientation === 'reverse') {
-                if (SVGPathEditor && typeof SVGPathEditor.reverse === 'function') {
+			}
+			if (options.orientation === 'reverse') {
+				if (SVGPathEditor && typeof SVGPathEditor.reverse === 'function') {
                     options.orientation = 0;
                     const pathElement = document.getElementById(id);
                     if (pathElement) {
@@ -167,11 +170,15 @@
                             reversedPathElement = pathElement.cloneNode(true);
                             reversedPathElement.setAttribute('d', dReversed);
                             reversedPathElement.setAttribute('id', id + '-reversed');
-                            reversedPathElement.setAttribute('stroke-opacity', '0');
-                            pathElement.parentNode.insertBefore(reversedPathElement, pathElement);
-                            textPath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", '#' + id + '-reversed');
-                        }
-                    }
+							reversedPathElement.setAttribute('stroke-opacity', '0');
+							pathElement.parentNode.insertBefore(reversedPathElement, pathElement);
+							textPath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", '#' + id + '-reversed');
+                        } else {
+							console.warn('d-attribute doesn\'t exists!');
+						}
+                    } else {
+						//console.warn('path-element with id "' + id + '" doesn\'t exists!');
+					}
                 } else {
                     console.warn('SVGPathEditor is not available (see: https://github.com/Pomax/svg-path-reverse). Fallback to flipping the text!');
                     options.orientation = 'flip';
@@ -188,8 +195,7 @@
 
             if (options.below) {
                 svg.insertBefore(textNode, svg.firstChild);
-            }
-            else {
+            } else {
                 svg.appendChild(textNode);
             }
 
