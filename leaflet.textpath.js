@@ -113,7 +113,8 @@
                 repeat: false,
                 fillColor: 'black',
                 attributes: {},
-                below: false,
+				below: false,
+				above: false
             };
 			options = L.Util.extend(defaults, options);
 			
