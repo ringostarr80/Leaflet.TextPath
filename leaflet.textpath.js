@@ -5,13 +5,27 @@
  */
 
 (function () {
+	const __bringToBack = L.Polyline.prototype.bringToBack;
+	const __bringToFront = L.Polyline.prototype.bringToFront;
     const __onAdd = L.Polyline.prototype.onAdd;
     const __onRemove = L.Polyline.prototype.onRemove;
     const __updatePath = L.Polyline.prototype._updatePath;
-    const __bringToFront = L.Polyline.prototype.bringToFront;
 
     const PolylineTextPath = {
-        mutationObserver: null,
+		mutationObserver: null,
+		
+		bringToBack: function () {
+            __bringToBack.call(this);
+			this._textRedraw();
+			
+			return this;
+        },
+		bringToFront: function () {
+            __bringToFront.call(this);
+			this._textRedraw();
+			
+			return this;
+        },
 
         onAdd: function (map) {
             const instance = this;
@@ -58,7 +72,9 @@
             });
 
             __onAdd.call(this, map);
-            this._textRedraw();
+			this._textRedraw();
+			
+			return this;
         },
 
         onRemove: function (map) {
@@ -67,12 +83,9 @@
 				//map._renderer._container.removeChild(this._textNode);
 				this._textNode.parentNode.removeChild(this._textNode);
             }
-            __onRemove.call(this, map);
-        },
-
-        bringToFront: function () {
-            __bringToFront.call(this);
-            this._textRedraw();
+			__onRemove.call(this, map);
+			
+			return this;
         },
 
         _updatePath: function () {
