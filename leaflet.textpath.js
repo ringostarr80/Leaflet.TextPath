@@ -201,6 +201,9 @@
                 }
             }
 
+			if (this._textZIndex !== undefined && this._textZIndex !== null) {
+				textNode.setAttribute('data-z-index', this._textZIndex);
+			}
             textNode.setAttribute('dy', dy);
             for(const attr in options.attributes) {
                 textNode.setAttribute(attr, options.attributes[attr]);
@@ -226,7 +229,13 @@
 					console.warn('unable to find ref-element (' + id + ') for text-path!');
 				}
 			} else {
-                svg.appendChild(textNode);
+                let textOverlayGroup = svg.querySelector('g.text-overlay');
+				if (!textOverlayGroup) {
+					textOverlayGroup = L.SVG.create('g');
+					textOverlayGroup.setAttribute('class', 'text-overlay');
+					svg.appendChild(textOverlayGroup);
+				}
+                textOverlayGroup.appendChild(textNode);
             }
 
             /* Center text according to the path's bounding box */
@@ -268,10 +277,72 @@
                 for(let i = 0; i < events.length; i++) {
                     L.DomEvent.on(textNode, events[i], this.fire, this);
                 }
-            }
+			}
+			
+			this._checkTextZIndex();
 
             return this;
-        }
+		},
+		
+		getTextZIndex: function() {
+			return this._textZIndex;
+		},
+
+		setTextZIndex: function(zIndex) {
+			this._textZIndex = zIndex;
+
+            return this;
+		},
+		
+		_checkTextZIndex() {
+			if (!this._textOptions) {
+				return;
+			}
+			if (this._textOptions.above || this._textOptions.below) {
+				return;
+			}
+
+			if (!this._textNode) {
+				return;
+			}
+			const dataZIndexAttr = this._textNode.attributes.getNamedItem('data-z-index');
+			if (!dataZIndexAttr) {
+				return;
+			}
+
+			const zIndex = parseInt(dataZIndexAttr.value);
+			if (isNaN(zIndex)) {
+				return;
+			}
+
+			if (!this._map) {
+				return;
+			}
+			if (!this._map._renderer) {
+				return;
+			}
+			if (!this._map._renderer._container) {
+				return;
+			}
+
+			const svg = this._map._renderer._container;
+			const textsWithZIndex = svg.querySelectorAll('g.text-overlay > text[data-z-index]');
+			for(const textWithZIndex of textsWithZIndex) {
+				const zIndexAttr = textWithZIndex.attributes.getNamedItem('data-z-index');
+				if (!zIndexAttr) {
+					continue;
+				}
+				const currentZIndex = parseInt(zIndexAttr.value);
+				if (isNaN(currentZIndex)) {
+					continue;
+				}
+
+				if (currentZIndex > zIndex) {
+					textWithZIndex.parentNode.insertBefore(this._textNode, textWithZIndex);
+					break;
+				}
+			}
+		},
     };
 
     L.Polyline.include(PolylineTextPath);
