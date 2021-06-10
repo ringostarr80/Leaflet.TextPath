@@ -15,6 +15,7 @@
 
 	const PolylineTextPath = {
 		mutationObserver: null,
+		_textOpacity: null,
 
 		bringToBack: function() {
 			__bringToBack.call(this);
@@ -315,7 +316,18 @@
 
 			this._checkTextZIndex();
 
+			if (this._textOpacity !== null) {
+				this._textNode.style.opacity = this._textOpacity;
+			}
+
 			return this;
+		},
+
+		setTextOpacity(opacity) {
+			this._textOpacity = opacity;
+			if (this._textNode) {
+				this._textNode.style.opacity = opacity;
+			}
 		},
 
 		getTextZIndex: function() {
