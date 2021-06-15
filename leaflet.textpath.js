@@ -31,15 +31,14 @@
 		},
 
 		onAdd: function(map) {
-			const instance = this;
 			this.mutationObserver = new MutationObserver((mutationList, observer) => {
 				if (!(SVGPathEditor && typeof SVGPathEditor.reverse === 'function')) {
 					return;
 				}
-				if (!instance._textNode) {
+				if (!this._textNode) {
 					return;
 				}
-				if (!instance._textNode.firstChild) {
+				if (!this._textNode.firstChild) {
 					return;
 				}
 
